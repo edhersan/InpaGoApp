@@ -1,0 +1,179 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+3 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+4 0 obj
+<< /Length 7109 >>
+stream
+0.027 0.082 0.184 rg 0 706 612 86 re f
+0.941 0.267 0.043 rg 0 701 612 5 re f
+1 1 1 rg BT /F2 18 Tf 48 762 Td (FUNDACION UNIVERSITARIA UNINPAHU) Tj ET
+0.941 0.267 0.043 rg BT /F2 13 Tf 48 742 Td (Inpa_Go \227 Informe de Par\341metros Legales y Privacidad) Tj ET
+0.80 0.84 0.90 rg BT /F1 9 Tf 48 722 Td (Ley 1581 de 2012 \267 Decreto 1377 de 2013 \(Colombia\) \267 Google Play / App Store \267 OWASP Mobile Top 10) Tj ET
+0.88 0.90 0.93 RG 0.5 w 48 42 m 564 42 l S
+0.39 0.45 0.55 rg BT /F1 8 Tf 48 28 Td (Inpa_Go \267 Cumplimiento Habeas Data y Pol\355ticas de Tiendas \267 24/11/2026) Tj ET
+0.39 0.45 0.55 rg BT /F1 8 Tf 520 28 Td (P\341gina 1) Tj ET
+0.941 0.267 0.043 rg 48 667 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 670 Td (1. Marco Normativo y Alcance de Cumplimiento) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 652 Td (La aplicaci\363n m\363vil y web Inpa_Go \(Fundaci\363n Universitaria UNINPAHU, Bogot\341 D.C., Colombia\) incorpora) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 638.5 Td (controles legales, t\351cnicos y de interfaz de usuario dise\361ados para cumplir integralmente con la legislaci\363n) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 625 Td (colombiana de protecci\363n de datos personales y las pol\355ticas de privacidad de Google Play y Apple App Store:) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 608.5 Td (\225 Ley Estatutaria 1581 de 2012: R\351gimen General de Protecci\363n de Datos Personales \(Habeas) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 595.5 Td (Data\), incluyendo autorizaci\363n previa, expresa e informada y tratamiento especial de datos) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 582.5 Td (sensibles \(Art. 5 y Art. 6\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 567.5 Td (\225 Decreto 1377 de 2013: Reglamentaci\363n del aviso de privacidad, car\341cter facultativo de la) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 554.5 Td (autorizaci\363n sobre datos sensibles y mecanismos \341giles para el ejercicio de Derechos ARCO.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 539.5 Td (\225 Pol\355ticas de Google Play y App Store: Minimizaci\363n de permisos nativos, bloqueo expl\355cito de) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 526.5 Td (ubicaci\363n en segundo plano, justificaci\363n transparente en primer plano y mecanismo de solicitud) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 513.5 Td (de eliminaci\363n de cuenta y datos.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 498.5 Td (\225 Est\341ndar OWASP Mobile Top 10 \(2024\): Cifrado en tr\341nsito \(HTTPS/TLS\), almacenamiento cifrado) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 485.5 Td (en Keychain/Keystore, pinning de origen para JWT y limpieza autom\341tica de archivos temporales.) Tj ET
+0.941 0.267 0.043 rg 48 459.5 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 462.5 Td (2. Tratamiento de Datos Biom\351tricos Sensibles y Alternativa Manual) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 444.5 Td (Inpa_Go trata datos personales de identificaci\363n institucional \(documento, c\363digo institucional, nombre) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 431 Td (completo y correo\) y, bajo autorizaci\363n expresa, dos categor\355as de datos biom\351tricos sensibles: la) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 417.5 Td (fotograf\355a facial de registro \(RF14\) y el patr\363n espectral de voz de 3 a 5 segundos \(RF08\).) Tj ET
+0.996 0.953 0.780 rg 48 316.5 516 88.5 re f
+0.941 0.267 0.043 rg 48 316.5 4 88.5 re f
+0.573 0.251 0.055 rg BT /F2 9.5 Tf 60 390 Td (Car\341cter Facultativo Obligatorio \(Art. 6 Ley 1581 de 2012\)) Tj ET
+0.47 0.21 0.06 rg BT /F1 9 Tf 60 376 Td (En la pantalla de registro \(app/login.tsx\), en el Aviso de Privacidad y en el panel del) Tj ET
+0.47 0.21 0.06 rg BT /F1 9 Tf 60 363.5 Td (estudiante se informa expl\355citamente que el titular NO est\341 obligado a autorizar datos) Tj ET
+0.47 0.21 0.06 rg BT /F1 9 Tf 60 351 Td (biom\351tricos sensibles. En caso de negativa o revocatoria posterior, el docente dispone) Tj ET
+0.47 0.21 0.06 rg BT /F1 9 Tf 60 338.5 Td (del m\351todo alternativo de registro manual \(MANUAL_DOCENTE\) sin afectaci\363n a los derechos) Tj ET
+0.47 0.21 0.06 rg BT /F1 9 Tf 60 326 Td (acad\351micos.) Tj ET
+0.941 0.267 0.043 rg 48 295.5 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 298.5 Td (3. Consentimientos Expl\355citos Implementados en la Interfaz) Tj ET
+0.027 0.082 0.184 rg 48 266.5 516 20 re f
+1 1 1 rg BT /F2 8.5 Tf 54 274.5 Td (Ubicaci\363n en la App) Tj ET
+1 1 1 rg BT /F2 8.5 Tf 194 274.5 Td (Mecanismo Legal Implementado) Tj ET
+1 1 1 rg BT /F2 8.5 Tf 390 274.5 Td (Regla de Activaci\363n) Tj ET
+0.973 0.980 0.988 rg 48 214.5 516 54 re f
+0.88 0.90 0.93 RG 0.5 w 48 214.5 516 54 re S
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 54 256.5 Td (app/login.tsx \(Registro\)) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 256.5 Td (Checkbox 1: Aceptaci\363n de T\351rminos) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 245 Td (de Uso y Aviso de Privacidad) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 233.5 Td (\(Habeas Data\) con enlaces al) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 222 Td (modal.) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 256.5 Td (Desmarcado por defecto.) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 245 Td (Obligatorio para crear cuenta.) Tj ET
+0.973 0.980 0.988 rg 48 174 516 42.5 re f
+0.88 0.90 0.93 RG 0.5 w 48 174 516 42.5 re S
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 54 204.5 Td (app/login.tsx \(Registro\)) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 204.5 Td (Checkbox 2: Autorizaci\363n expresa y) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 193 Td (facultativa de datos biom\351tricos) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 181.5 Td (\(foto/voz\) y GPS puntual en clase.) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 204.5 Td (Desmarcado por defecto.) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 193 Td (Informa alternativa) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 181.5 Td (MANUAL_DOCENTE.) Tj ET
+0.973 0.980 0.988 rg 48 122 516 54 re f
+0.88 0.90 0.93 RG 0.5 w 48 122 516 54 re S
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 54 164 Td (validate-location.ts) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 164 Td (Di\341logo expl\355cito de) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 152.5 Td (consentimiento GPS antes de) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 141 Td (solicitar permiso al sistema) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 129.5 Td (operativo \(RNF06\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 164 Td (Bajo demanda al pulsar) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 152.5 Td (Confirmar Asistencia. Solo) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 141 Td (primer plano.) Tj ET
+0.973 0.980 0.988 rg 48 81.5 516 42.5 re f
+0.88 0.90 0.93 RG 0.5 w 48 81.5 516 42.5 re S
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 54 112 Td (voice-recorder-panel.tsx) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 112 Td (Di\341logo expl\355cito de) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 100.5 Td (consentimiento de micr\363fono antes) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 89 Td (de grabar 3 a 5 segundos de voz.) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 112 Td (Bajo demanda en enrolamiento o) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 100.5 Td (confirmaci\363n de clase.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 6214 >>
+stream
+0.027 0.082 0.184 rg 0 760 612 32 re f
+0.941 0.267 0.043 rg 0 757 612 3 re f
+1 1 1 rg BT /F2 10 Tf 48 772 Td (Inpa_Go \(UNINPAHU\) \227 Par\341metros Legales y Protecci\363n de Datos) Tj ET
+0.88 0.90 0.93 RG 0.5 w 48 42 m 564 42 l S
+0.39 0.45 0.55 rg BT /F1 8 Tf 48 28 Td (Inpa_Go \267 Cumplimiento Habeas Data y Pol\355ticas de Tiendas \267 24/11/2026) Tj ET
+0.39 0.45 0.55 rg BT /F1 8 Tf 520 28 Td (P\341gina 2) Tj ET
+0.973 0.980 0.988 rg 48 695.5 516 42.5 re f
+0.88 0.90 0.93 RG 0.5 w 48 695.5 516 42.5 re S
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 54 726 Td (app/login.tsx \(Foto\)) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 726 Td (Di\341logo expl\355cito de) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 714.5 Td (consentimiento antes de abrir) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 194 703 Td (c\341mara o galer\355a \(ImagePicker\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 726 Td (Bajo demanda al pulsar Tomar) Tj ET
+0.15 0.20 0.28 rg BT /F1 8.5 Tf 390 714.5 Td (Foto o Elegir de Galer\355a.) Tj ET
+0.941 0.267 0.043 rg 48 680.5 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 683.5 Td (4. Minimizaci\363n de Permisos Nativos \(app.json\)) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 665.5 Td (Todos los permisos declarados en app.json corresponden estrictamente a las funcionalidades acad\351micas de) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 652 Td (Inpa_Go y operan \372nicamente en primer plano:) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 635.5 Td (\225 Bloqueo de rastreo en segundo plano: android.blockedPermissions incluye expl\355citamente) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 622.5 Td (android.permission.ACCESS_BACKGROUND_LOCATION.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 607.5 Td (\225 Descripciones iOS \(infoPlist\) en espa\361ol: NSCameraUsageDescription,) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 594.5 Td (NSPhotoLibraryUsageDescription, NSMicrophoneUsageDescription,) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 581.5 Td (NSLocationWhenInUseUsageDescription y NSFaceIDUsageDescription especifican uso puntual) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 568.5 Td (exclusivamente en primer plano.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 553.5 Td (\225 Permisos Android m\355nimos: CAMERA, RECORD_AUDIO, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION,) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 540.5 Td (USE_BIOMETRIC y USE_FINGERPRINT.) Tj ET
+0.941 0.267 0.043 rg 48 514.5 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 517.5 Td (5. Transmisi\363n Internacional, Seguridad T\351cnica y Retenci\363n Local) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 499.5 Td (\225 Transmisi\363n internacional cifrada: El Aviso de Privacidad informa expresamente la transmisi\363n) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 486.5 Td (cifrada de datos y evidencias hacia servidores en la nube de Vercel \(API REST y Vercel Blob) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 473.5 Td (privado\) y TiDB Cloud \(base de datos MySQL\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 458.5 Td (\225 Seguridad en transporte \(M5\): getApiBaseUrl\(\) bloquea conexiones http:// sin cifrar en) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 445.5 Td (producci\363n/release y isTrustedApiOrigin\(\) impide enviar el token Authorization: Bearer a) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 432.5 Td (dominios externos.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 417.5 Td (\225 Almacenamiento cifrado en dispositivo \(M9\): Los tokens JWT se almacenan en iOS/Android) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 404.5 Td (exclusivamente con expo-secure-store bajo WHEN_UNLOCKED_THIS_DEVICE_ONLY \(sin AsyncStorage ni) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 391.5 Td (logs console.log\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 376.5 Td (\225 Integridad y control de acceso: Huella criptogr\341fica SHA-256 sobre fotograf\355as y perfiles de) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 363.5 Td (voz, control de acceso basado en roles \(RBAC: ADMIN_BIENESTAR, DOCENTE, ESTUDIANTE\) y cierre de) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 350.5 Td (sesi\363n revocable \(POST /auth/logout\).) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 335.5 Td (\225 Limpieza autom\341tica de cach\351 temporal: cleanupTempFileSafe\(\) elimina inmediatamente de) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 322.5 Td (Paths.cache \(y revoca blob: en web\) los reportes PDF compartidos, audios grabados, fotos) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 309.5 Td (temporales de registro y avatares descargados al desmontar.) Tj ET
+0.941 0.267 0.043 rg 48 283.5 4 16 re f
+0.027 0.082 0.184 rg BT /F2 12 Tf 60 286.5 Td (6. Modal Legal, Derechos ARCO y Autoridad de Vigilancia \(SIC\)) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 268.5 Td (El componente reutilizable src/components/legal-privacy-modal.tsx es accesible desde el pie de app/login.tsx) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 255 Td (y de los tres dashboards \(student-dashboard.tsx, teacher-dashboard.tsx y admin-dashboard.tsx\) con tres) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 48 241.5 Td (pesta\361as: Aviso de Privacidad \(Habeas Data\), T\351rminos de Uso y Contacto y Derechos ARCO.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 225 Td (\225 Tarjeta Privacidad y Derechos ARCO \(Panel Estudiante\): Permite abrir la pol\355tica completa y) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 212 Td (enviar solicitudes directas por correo \(mailto:\) prellenadas con nombre completo, documento y) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 199 Td (correo institucional para: \(1\) Revocar autorizaci\363n biom\351trica \(Voz/Foto\) y pasar a) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 186 Td (MANUAL_DOCENTE, o \(2\) Solicitar la eliminaci\363n de cuenta y datos personales.) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 54 171 Td (\225 Contacto institucional y vigilancia: Identifica como responsable a la Fundaci\363n Universitaria) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 158 Td (UNINPAHU \(Bogot\341 D.C., Colombia\) con campos editables de contacto oficial e informa) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 145 Td (expresamente el derecho a acudir ante la Superintendencia de Industria y Comercio \(SIC \227) Tj ET
+0.15 0.20 0.28 rg BT /F1 9.5 Tf 62 132 Td (www.sic.gov.co\) como autoridad de protecci\363n de datos en Colombia.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Type /Catalog /Pages 3 0 R >>
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000106 00000 n 
+0000000208 00000 n 
+0000000271 00000 n 
+0000007432 00000 n 
+0000007568 00000 n 
+0000013834 00000 n 
+0000013970 00000 n 
+trailer
+<< /Size 9 /Root 8 0 R >>
+startxref
+14019
+%%EOF

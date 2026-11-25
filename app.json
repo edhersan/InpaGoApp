@@ -7,11 +7,6 @@
     "scheme": "inpago",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#07152F"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "co.edu.uninpago",
@@ -51,6 +46,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#07152F"
+        }
+      ],
       "expo-secure-store",
       [
         "expo-local-authentication",
@@ -77,7 +80,8 @@
           "microphonePermission": "Inpa_Go necesita acceso al micrófono para el enrolamiento de voz y confirmación de asistencia."
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
@@ -92,6 +96,6 @@
         "projectId": "6a569b70-544c-4516-a718-c443613f7023"
       }
     },
-    "owner": "edhersan"
+    "owner": "edhersans-team"
   }
 }
