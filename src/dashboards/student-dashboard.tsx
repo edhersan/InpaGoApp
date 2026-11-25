@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactElement } from 're
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Platform,
   Pressable,
@@ -33,6 +32,7 @@ import {
   LegalPrivacyModal,
   type LegalTab,
 } from '@/components/legal-privacy-modal';
+import { ProtectedAvatar } from '@/components/protected-avatar';
 
 function getInitials(fullName: string): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -107,9 +107,10 @@ export function StudentDashboard(): ReactElement {
     try {
       const [abiertasData, historialData] = await Promise.all([
         apiRequest<SesionAbiertaItem[] | { sesiones: SesionAbiertaItem[] }>('/sesiones/abiertas'),
-        apiRequest<HistorialAsistenciaItem[] | { historial: HistorialAsistenciaItem[] }>(
-          '/asistencias/historial'
-        ),
+        apiRequest<
+          | HistorialAsistenciaItem[]
+          | { historial?: HistorialAsistenciaItem[]; registros?: HistorialAsistenciaItem[] }
+        >('/asistencias/historial'),
       ]);
       const openList = Array.isArray(abiertasData)
         ? abiertasData
@@ -118,9 +119,11 @@ export function StudentDashboard(): ReactElement {
           : [];
       const historyList = Array.isArray(historialData)
         ? historialData
-        : Array.isArray(historialData?.historial)
-          ? historialData.historial
-          : [];
+        : Array.isArray(historialData?.registros)
+          ? historialData.registros
+          : Array.isArray(historialData?.historial)
+            ? historialData.historial
+            : [];
       setSesionesAbiertas(openList);
       setHistorial(historyList);
     } catch (error) {
@@ -278,10 +281,11 @@ export function StudentDashboard(): ReactElement {
     let excusas = 0;
 
     filteredHistorial.forEach((item) => {
-      if (item.estado === 'PRESENTE') presentes += 1;
-      else if (item.estado === 'TARDE') tardanzas += 1;
-      else if (item.estado === 'AUSENTE') ausencias += 1;
-      else if (item.estado === 'EXCUSA') excusas += 1;
+      const estado = item.estado_asistencia ?? item.estado ?? 'AUSENTE';
+      if (estado === 'PRESENTE') presentes += 1;
+      else if (estado === 'TARDE') tardanzas += 1;
+      else if (estado === 'AUSENTE') ausencias += 1;
+      else if (estado === 'EXCUSA') excusas += 1;
     });
 
     const efectivos = presentes + tardanzas + excusas;
@@ -301,20 +305,13 @@ export function StudentDashboard(): ReactElement {
       {/* Encabezado y Perfil */}
       <View style={styles.headerCard}>
         <View style={styles.profileRow}>
-          {!avatarFailed && accessToken ? (
-            <Image
-              source={{
-                uri: avatarUri,
-                headers: { Authorization: `Bearer ${accessToken}` },
-              }}
-              onError={() => setAvatarFailed(true)}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatarFallback}>
-              <Text style={styles.avatarInitials}>{getInitials(user.nombre_completo)}</Text>
-            </View>
-          )}
+          <ProtectedAvatar
+            accessToken={accessToken}
+            borderColor="#F0440B"
+            fullName={user.nombre_completo}
+            size={58}
+            uri={avatarUri}
+          />
 
           <View style={styles.profileInfo}>
             <Text style={styles.brandSmall}>
@@ -408,7 +405,8 @@ export function StudentDashboard(): ReactElement {
           <View style={styles.evidenceBox}>
             <Text style={styles.evidenceTitle}>Perfil vocal procesado</Text>
             <Text style={styles.evidenceText}>
-              Método: {voiceProfileResult.metodo_analisis} · Frames activos: {voiceProfileResult.frames_activos}
+              Método: {voiceProfileResult.metodo_analisis ?? 'FFT Espectral'} · Frames activos:{' '}
+              {voiceProfileResult.active_frames ?? voiceProfileResult.frames_activos ?? 0}
             </Text>
           </View>
         ) : null}
@@ -651,7 +649,8 @@ export function StudentDashboard(): ReactElement {
           <Text style={styles.emptyText}>Aún no tienes registros de asistencia confirmados.</Text>
         ) : (
           filteredHistorial.map((item) => {
-            const colors = getAttendanceBadgeColors(item.estado);
+            const estadoActual = item.estado_asistencia ?? item.estado ?? 'AUSENTE';
+            const colors = getAttendanceBadgeColors(estadoActual);
             return (
               <View key={item.asistencia_id} style={styles.historyRow}>
                 <View style={styles.historyInfo}>
@@ -664,7 +663,7 @@ export function StudentDashboard(): ReactElement {
                   {item.observacion ? <Text style={styles.itemObs}>Obs: {item.observacion}</Text> : null}
                 </View>
                 <View style={[styles.badge, { backgroundColor: colors.bg }]}>
-                  <Text style={[styles.badgeText, { color: colors.fg }]}>{item.estado}</Text>
+                  <Text style={[styles.badgeText, { color: colors.fg }]}>{estadoActual}</Text>
                 </View>
               </View>
             );

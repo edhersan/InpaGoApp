@@ -3,6 +3,7 @@
 Aplicación cliente multiplataforma (**Android**, **iOS** y **Web**) desarrollada con **React Native**, **Expo SDK 58**, **Expo Router** y **TypeScript estricto (`.tsx` / `.ts`)**, conectada a la API REST institucional `/api/v1`.
 
 ## Especificación y Reglas
+- Manual de uso de la aplicación: [`docs/MANUAL_USO_INPA_GO.md`](docs/MANUAL_USO_INPA_GO.md)
 - Requisitos funcionales y no funcionales: [`docs/specs/INPA_GO_REQUIREMENTS.md`](docs/specs/INPA_GO_REQUIREMENTS.md)
 - Especificación técnica completa: [`docs/specs/INPA_GO_FRONTEND_SPEC.md`](docs/specs/INPA_GO_FRONTEND_SPEC.md)
 - Reglas de desarrollo frontend: [`.agent/rules/inpago-frontend.md`](.agent/rules/inpago-frontend.md)

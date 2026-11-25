@@ -8,7 +8,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import { File as ExpoFile } from 'expo-file-system';
-import { appendFileToFormData } from '@/api/client';
+import { appendFileToFormData, cleanupTempFileSafe } from '@/api/client';
 import { AudioWaveVisualizer } from '@/voice/audio-wave-visualizer';
 
 export interface RecordedAudioClip {
@@ -180,6 +180,9 @@ export function VoiceRecorderPanel({
 
   const startRecording = async (): Promise<void> => {
     setErrorMessage(null);
+    if (recordedClip?.uri) {
+      cleanupTempFileSafe(recordedClip.uri);
+    }
     setRecordedClip(null);
     setElapsedMs(0);
 
@@ -241,9 +244,11 @@ export function VoiceRecorderPanel({
     if (!recordedClip) {
       return;
     }
+    const clipToCleanup = recordedClip.uri;
     setErrorMessage(null);
     try {
       await onClipReady(recordedClip);
+      cleanupTempFileSafe(clipToCleanup);
       setRecordedClip(null);
       setElapsedMs(0);
     } catch (error) {

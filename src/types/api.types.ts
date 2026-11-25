@@ -32,8 +32,9 @@ export interface LoginResponseData {
 export interface PerfilVozResponse {
   usuario_id: number;
   perfil_voz_hash_sha256: string;
-  metodo_analisis: string;
-  frames_activos: number;
+  metodo_analisis?: string;
+  frames_activos?: number;
+  active_frames?: number;
 }
 
 export interface GeocercaItem {
@@ -47,8 +48,10 @@ export interface GeocercaItem {
 
 export interface AsignaturaGrupoItem {
   asignatura_id: number;
-  codigo: string;
-  nombre: string;
+  codigo?: string;
+  nombre?: string;
+  asignatura_codigo?: string;
+  asignatura_nombre?: string;
   creditos: number | null;
   activa?: 0 | 1;
   grupo_id: number | null;
@@ -84,9 +87,9 @@ export interface EvidenciaVozGpsResponse {
   estudiante_id: number;
   distancia_metros: number;
   radio_autorizado_metros: number;
-  ubicacion_valida: boolean;
+  ubicacion_valida: boolean | 0 | 1;
   similitud_espectro: number;
-  voz_valida: boolean;
+  voz_valida: boolean | 0 | 1;
   metodo_analisis: string;
   enrolamiento_inicial: boolean;
 }
@@ -132,7 +135,8 @@ export interface ConfirmarAsistenciaItem {
 
 export interface HistorialAsistenciaItem {
   asistencia_id: number;
-  estado: EstadoAsistencia;
+  estado?: EstadoAsistencia;
+  estado_asistencia?: EstadoAsistencia;
   metodo_confirmacion: MetodoConfirmacion;
   observacion: string | null;
   confirmado_en: string;
@@ -157,4 +161,13 @@ export interface ImportacionExcelResponse {
   filas_exitosas: number;
   filas_con_error: number;
   errores: Array<{ fila: number; documento?: string; error: string }>;
+}
+
+export interface EstudianteGrupoItem {
+  usuario_id: number;
+  documento: string;
+  codigo_institucional: string | null;
+  nombre_completo: string;
+  correo_institucional: string;
+  foto_url?: string;
 }

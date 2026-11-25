@@ -31,7 +31,9 @@ async function setItem(key: string, value: string): Promise<void> {
   if (Platform.OS === 'web') {
     return;
   }
-  await SecureStore.setItemAsync(key, value);
+  await SecureStore.setItemAsync(key, value, {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+  });
 }
 
 async function removeItem(key: string): Promise<void> {

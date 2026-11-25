@@ -15,7 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { File as ExpoFile } from 'expo-file-system';
-import { apiRequest, appendFileToFormData } from '@/api/client';
+import { apiRequest, appendFileToFormData, cleanupTempFileSafe } from '@/api/client';
 import { getDashboardRouteForRole, useAuth } from '@/auth/auth-context';
 import { LegalPrivacyModal, type LegalTab } from '@/components/legal-privacy-modal';
 
@@ -255,6 +255,8 @@ export default function LoginScreen(): ReactElement {
         correo_institucional: registerEmail.trim().toLowerCase(),
         password: registerPassword,
       });
+      cleanupTempFileSafe(photo.uri);
+      setPhoto(null);
       router.replace(getDashboardRouteForRole(usuario.rol_codigo));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No fue posible completar el registro.');

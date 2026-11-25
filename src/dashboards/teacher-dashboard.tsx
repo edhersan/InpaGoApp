@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactElement } from 're
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -21,9 +20,11 @@ import type {
   SesionAbiertaItem,
 } from '@/types/api.types';
 import { apiRequest, downloadPdfReport } from '@/api/client';
-import { buildProtectedAssetUrl } from '@/api/config';
+import { buildProtectedAssetUrl, getUsuarioFotoUrl } from '@/api/config';
 import { useAuth } from '@/auth/auth-context';
+import { GroupStudentsModal } from '@/components/group-students-modal';
 import { LegalPrivacyModal } from '@/components/legal-privacy-modal';
+import { ProtectedAvatar } from '@/components/protected-avatar';
 import { speakSpanish } from '@/voice/tts-helper';
 
 const ATTENDANCE_STATES: EstadoAsistencia[] = ['PRESENTE', 'TARDE', 'AUSENTE', 'EXCUSA'];
@@ -104,6 +105,7 @@ export function TeacherDashboard(): ReactElement {
   const [draftStates, setDraftStates] = useState<Record<number, EstadoAsistencia>>({});
   const [failedAvatars, setFailedAvatars] = useState<Record<number, boolean>>({});
   const [legalVisible, setLegalVisible] = useState<boolean>(false);
+  const [studentsModalVisible, setStudentsModalVisible] = useState<boolean>(false);
 
   const loadAttendanceList = useCallback(async (sesionId: number): Promise<void> => {
     const data = await apiRequest<ListaAsistenciaResponse>(`/sesiones/${sesionId}/lista-asistencia`);
@@ -420,7 +422,7 @@ export function TeacherDashboard(): ReactElement {
                     style={[styles.selectPill, active && styles.selectPillActive]}
                   >
                     <Text style={[styles.selectPillText, active && styles.selectPillTextActive]}>
-                      {g.codigo} · {g.codigo_grupo} ({g.nombre})
+                      {g.asignatura_codigo ?? g.codigo} · {g.codigo_grupo} ({g.asignatura_nombre ?? g.nombre})
                     </Text>
                   </Pressable>
                 );
@@ -445,20 +447,32 @@ export function TeacherDashboard(): ReactElement {
               })}
             </ScrollView>
 
-            <Pressable
-              accessibilityRole="button"
-              disabled={busyAction}
-              onPress={() => {
-                void handleStartSession();
-              }}
-              style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-            >
-              {busyAction ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Iniciar Sesión de Asistencia</Text>
-              )}
-            </Pressable>
+            <View style={styles.actionsRow}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={busyAction}
+                onPress={() => {
+                  void handleStartSession();
+                }}
+                style={({ pressed }) => [styles.primaryButton, { flexGrow: 1 }, pressed && styles.pressed]}
+              >
+                {busyAction ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Iniciar Sesión de Asistencia</Text>
+                )}
+              </Pressable>
+
+              {selectedGrupoId ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setStudentsModalVisible(true)}
+                  style={styles.navyButton}
+                >
+                  <Text style={styles.btnText}>Gestionar Estudiantes del Grupo</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         ) : (
           <View style={styles.formGap}>
@@ -506,6 +520,14 @@ export function TeacherDashboard(): ReactElement {
               >
                 <Text style={styles.btnText}>Descargar Reporte PDF</Text>
               </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setStudentsModalVisible(true)}
+                style={styles.smallOutlineBtn}
+              >
+                <Text style={styles.smallOutlineText}>Gestionar Estudiantes del Grupo</Text>
+              </Pressable>
             </View>
           </View>
         )}
@@ -539,8 +561,8 @@ export function TeacherDashboard(): ReactElement {
           ) : (
             listaAsistencia.estudiantes.map((est) => {
               const selectedState = draftStates[est.estudiante_id] ?? 'AUSENTE';
-              const fotoUri = buildProtectedAssetUrl(est.foto_url);
-              const showPhoto = Boolean(fotoUri && accessToken && !failedAvatars[est.estudiante_id]);
+              const fotoUri =
+                buildProtectedAssetUrl(est.foto_url) || getUsuarioFotoUrl(est.estudiante_id);
 
               const gpsColor =
                 est.ubicacion_valida === 1
@@ -559,24 +581,13 @@ export function TeacherDashboard(): ReactElement {
               return (
                 <View key={est.estudiante_id} style={styles.studentCard}>
                   <View style={styles.studentTopRow}>
-                    {showPhoto ? (
-                      <Image
-                        source={{
-                          uri: fotoUri,
-                          headers: { Authorization: `Bearer ${accessToken}` },
-                        }}
-                        onError={() =>
-                          setFailedAvatars((prev) => ({ ...prev, [est.estudiante_id]: true }))
-                        }
-                        style={styles.studentAvatar}
-                      />
-                    ) : (
-                      <View style={styles.studentAvatarFallback}>
-                        <Text style={styles.studentAvatarInitials}>
-                          {getInitials(est.nombre_completo)}
-                        </Text>
-                      </View>
-                    )}
+                    <ProtectedAvatar
+                      accessToken={accessToken}
+                      borderColor="#07152F"
+                      fullName={est.nombre_completo}
+                      size={52}
+                      uri={fotoUri}
+                    />
 
                     <View style={styles.studentInfo}>
                       <Text style={styles.itemTitle}>{est.nombre_completo}</Text>
@@ -674,6 +685,27 @@ export function TeacherDashboard(): ReactElement {
       </Pressable>
 
       <LegalPrivacyModal onClose={() => setLegalVisible(false)} visible={legalVisible} />
+
+      <GroupStudentsModal
+        grupoId={activeSesion ? activeSesion.grupo_id : selectedGrupoId}
+        grupoLabel={
+          activeSesion
+            ? `${activeSesion.asignatura_codigo} · ${activeSesion.asignatura_nombre} — Grupo ${activeSesion.codigo_grupo}`
+            : (() => {
+                const selected = grupos.find((g) => g.grupo_id === selectedGrupoId);
+                return selected
+                  ? `${selected.asignatura_codigo ?? selected.codigo ?? ''} · ${selected.asignatura_nombre ?? selected.nombre ?? ''} — Grupo ${selected.codigo_grupo ?? ''}`
+                  : 'Grupo seleccionado';
+              })()
+        }
+        onClose={() => setStudentsModalVisible(false)}
+        onMembershipChanged={async () => {
+          if (activeSesion && (activeSesion.estado === 'ABIERTA' || activeSesion.estado === 'PAUSADA')) {
+            await loadAttendanceList(activeSesion.sesion_id);
+          }
+        }}
+        visible={studentsModalVisible}
+      />
     </ScrollView>
   );
 }

@@ -3,7 +3,7 @@ import { File as ExpoFile, Paths } from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import type { ApiResponse, UsuarioAuth } from '@/types/api.types';
-import { getApiBaseUrl } from '@/api/config';
+import { getApiBaseUrl, isTrustedApiOrigin } from '@/api/config';
 import { PENDING_SYNC_KEY, SessionStorage } from '@/auth/storage';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -113,8 +113,35 @@ export async function flushPendingSyncQueue(): Promise<{ synced: number; remaini
   return { synced, remaining: remaining.length };
 }
 
+export function cleanupTempFileSafe(uri: string | null | undefined): void {
+  if (!uri) {
+    return;
+  }
+  if (Platform.OS === 'web') {
+    if (uri.startsWith('blob:') && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+      URL.revokeObjectURL(uri);
+    }
+    return;
+  }
+  try {
+    const cachePrefix = Paths.cache?.uri ?? '';
+    if (cachePrefix && uri.startsWith(cachePrefix)) {
+      const file = new ExpoFile(uri);
+      if (file.exists) {
+        file.delete();
+      }
+    }
+  } catch {
+    // Limpieza best-effort para no interrumpir flujos del usuario
+  }
+}
+
 function normalizePath(path: string): string {
-  return path.startsWith('/') ? path : `/${path}`;
+  const trimmed = path.trim();
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('//')) {
+    throw new Error('Ruta API inválida: solo se permiten rutas relativas al dominio institucional.');
+  }
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
 function isAuthEndpoint(path: string): boolean {
@@ -282,6 +309,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
 
     if (!skipAuth) {
+      if (!isTrustedApiOrigin(url)) {
+        throw new Error('Bloqueado el envío de credenciales a un dominio externo no autorizado.');
+      }
       const token = tokenOverride !== undefined ? tokenOverride : await SessionStorage.getAccessToken();
       if (token) {
         headers.Authorization = `Bearer ${token}`;
@@ -354,6 +384,10 @@ export async function downloadPdfReport(queryString: string): Promise<void> {
     throw new Error('No existe una sesión activa para descargar el reporte PDF.');
   }
 
+  if (!isTrustedApiOrigin(url)) {
+    throw new Error('Bloqueada la descarga de reporte desde un dominio externo no autorizado.');
+  }
+
   const fileName = `reporte-asistencia-inpago-${Date.now()}.pdf`;
 
   if (Platform.OS === 'web') {
@@ -399,15 +433,19 @@ export async function downloadPdfReport(queryString: string): Promise<void> {
     idempotent: true,
   });
 
-  const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(downloadedFile.uri, {
-      mimeType: 'application/pdf',
-      dialogTitle: 'Compartir Reporte de Asistencia Inpa_Go',
-      UTI: 'com.adobe.pdf',
-    });
-    return;
-  }
+  try {
+    const canShare = await Sharing.isAvailableAsync();
+    if (canShare) {
+      await Sharing.shareAsync(downloadedFile.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Compartir Reporte de Asistencia Inpa_Go',
+        UTI: 'com.adobe.pdf',
+      });
+      return;
+    }
 
-  await Print.printAsync({ uri: downloadedFile.uri });
+    await Print.printAsync({ uri: downloadedFile.uri });
+  } finally {
+    cleanupTempFileSafe(downloadedFile.uri);
+  }
 }

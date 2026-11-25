@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +21,7 @@ import type {
 } from '@/types/api.types';
 import { apiRequest, appendFileToFormData } from '@/api/client';
 import { useAuth } from '@/auth/auth-context';
+import { GroupStudentsModal } from '@/components/group-students-modal';
 import { LegalPrivacyModal } from '@/components/legal-privacy-modal';
 
 type AdminTab = 'usuarios' | 'asignaturas' | 'excel' | 'geocercas';
@@ -64,6 +66,7 @@ export function AdminDashboard(): ReactElement {
 
   // Usuarios y Docentes (RF03)
   const [usuarios, setUsuarios] = useState<AdminUsuarioItem[]>([]);
+  const [docentesActivos, setDocentesActivos] = useState<AdminUsuarioItem[]>([]);
   const [filterRol, setFilterRol] = useState<RolCodigo | ''>('');
   const [filterActivo, setFilterActivo] = useState<'' | '1' | '0'>('');
   const [docDocumento, setDocDocumento] = useState<string>('');
@@ -93,6 +96,15 @@ export function AdminDashboard(): ReactElement {
   const [geoLongitud, setGeoLongitud] = useState<string>('');
   const [geoRadio, setGeoRadio] = useState<string>('100');
   const [legalVisible, setLegalVisible] = useState<boolean>(false);
+  const [assignTeacherGroup, setAssignTeacherGroup] = useState<AsignaturaGrupoItem | null>(null);
+  const [studentsModalGroup, setStudentsModalGroup] = useState<{
+    grupoId: number;
+    label: string;
+  } | null>(null);
+  const [userMenuTarget, setUserMenuTarget] = useState<AdminUsuarioItem | null>(null);
+  const [quickAsigId, setQuickAsigId] = useState<number | null>(null);
+  const [quickGrupoCodigo, setQuickGrupoCodigo] = useState<string>('G01');
+  const [quickPeriodo, setQuickPeriodo] = useState<string>('2026-2');
 
   const loadUsuarios = useCallback(async (): Promise<void> => {
     const params = new URLSearchParams();
@@ -131,26 +143,36 @@ export function AdminDashboard(): ReactElement {
     }
   }, [geoSede]);
 
+  const loadDocentesActivos = useCallback(async (): Promise<void> => {
+    const data = await apiRequest<AdminUsuarioItem[] | { usuarios: AdminUsuarioItem[] }>(
+      '/usuarios?rol_codigo=DOCENTE&activo=1'
+    );
+    const list = Array.isArray(data) ? data : Array.isArray(data?.usuarios) ? data.usuarios : [];
+    setDocentesActivos(list);
+  }, []);
+
   const loadAll = useCallback(async (): Promise<void> => {
     setLoading(true);
     setErrorMessage(null);
     try {
-      await Promise.all([loadUsuarios(), loadAsignaturas(), loadGeocercas()]);
+      await Promise.all([loadUsuarios(), loadDocentesActivos(), loadAsignaturas(), loadGeocercas()]);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Error al cargar datos de administración.');
     } finally {
       setLoading(false);
     }
-  }, [loadAsignaturas, loadGeocercas, loadUsuarios]);
+  }, [loadAsignaturas, loadDocentesActivos, loadGeocercas, loadUsuarios]);
 
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
 
-  const docentesList = useMemo(
-    () => usuarios.filter((u) => u.rol_codigo === 'DOCENTE' && isRecordActive(u.activo)),
-    [usuarios]
-  );
+  const docentesList = useMemo(() => {
+    if (docentesActivos.length > 0) {
+      return docentesActivos;
+    }
+    return usuarios.filter((u) => u.rol_codigo === 'DOCENTE' && isRecordActive(u.activo));
+  }, [docentesActivos, usuarios]);
 
   const uniqueAsignaturas = useMemo(() => {
     const map = new Map<number, AsignaturaGrupoItem>();
@@ -161,6 +183,11 @@ export function AdminDashboard(): ReactElement {
     });
     return Array.from(map.values());
   }, [asignaturas]);
+
+  const gruposDisponibles = useMemo(
+    () => asignaturas.filter((item) => item.grupo_id !== null),
+    [asignaturas]
+  );
 
   const handleCreateDocente = async (): Promise<void> => {
     setErrorMessage(null);
@@ -181,7 +208,7 @@ export function AdminDashboard(): ReactElement {
           codigo_institucional: docCodigo.trim() || null,
           nombre_completo: docNombre.trim(),
           correo_institucional: docCorreo.trim().toLowerCase(),
-          password: docPassword,
+          password_temporal: docPassword,
         },
       });
       setDocDocumento('');
@@ -259,7 +286,7 @@ export function AdminDashboard(): ReactElement {
         queueOnNetworkError: true,
         body: { activa: nextActive },
       });
-      setInfoMessage(`Asignatura ${item.codigo} actualizada.`);
+      setInfoMessage(`Asignatura ${item.asignatura_codigo ?? item.codigo ?? item.asignatura_id} actualizada.`);
       await loadAsignaturas();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No fue posible actualizar la asignatura.');
@@ -279,7 +306,7 @@ export function AdminDashboard(): ReactElement {
 
     setBusy(true);
     try {
-      await apiRequest<unknown>('/grupos', {
+      const created = await apiRequest<{ grupo_id?: number }>('/grupos', {
         method: 'POST',
         queueOnNetworkError: true,
         body: {
@@ -289,6 +316,13 @@ export function AdminDashboard(): ReactElement {
           periodo_academico: grupoPeriodo.trim(),
         },
       });
+      if (created?.grupo_id && grupoDocenteId) {
+        await apiRequest<unknown>(`/grupos/${created.grupo_id}`, {
+          method: 'PATCH',
+          queueOnNetworkError: true,
+          body: { docente_id: grupoDocenteId },
+        });
+      }
       setGrupoCodigo('');
       setInfoMessage('Grupo académico creado correctamente.');
       await loadAsignaturas();
@@ -316,6 +350,107 @@ export function AdminDashboard(): ReactElement {
       await loadAsignaturas();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No fue posible actualizar el grupo.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAssignTeacherToGroup = async (
+    grupoId: number,
+    docenteId: number,
+    docenteNombre: string
+  ): Promise<void> => {
+    setBusy(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+    try {
+      await apiRequest<unknown>(`/grupos/${grupoId}`, {
+        method: 'PATCH',
+        queueOnNetworkError: true,
+        body: { docente_id: docenteId },
+      });
+      setAssignTeacherGroup(null);
+      setUserMenuTarget(null);
+      setInfoMessage(`Docente ${docenteNombre} asignado al grupo correctamente.`);
+      await loadAsignaturas();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'No fue posible asignar el docente al grupo.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleEnrollStudentFromDirectory = async (
+    student: AdminUsuarioItem,
+    grupo: AsignaturaGrupoItem
+  ): Promise<void> => {
+    if (!grupo.grupo_id) {
+      return;
+    }
+    setBusy(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+    try {
+      await apiRequest<unknown>(`/grupos/${grupo.grupo_id}/estudiantes`, {
+        method: 'POST',
+        body: { estudiante_id: student.usuario_id },
+      });
+      setUserMenuTarget(null);
+      setInfoMessage(
+        `${student.nombre_completo} fue incluido en ${grupo.asignatura_codigo ?? grupo.codigo ?? ''} · Grupo ${grupo.codigo_grupo ?? ''}.`
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible incluir al estudiante en el grupo.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleQuickCreateGroupForTeacher = async (teacher: AdminUsuarioItem): Promise<void> => {
+    const targetAsigId = quickAsigId ?? uniqueAsignaturas[0]?.asignatura_id ?? null;
+    if (!targetAsigId || !quickGrupoCodigo.trim() || !quickPeriodo.trim()) {
+      setErrorMessage('Selecciona una asignatura e ingresa código de grupo y período académico.');
+      return;
+    }
+
+    setBusy(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+    try {
+      const created = await apiRequest<{ grupo_id?: number }>('/grupos', {
+        method: 'POST',
+        queueOnNetworkError: true,
+        body: {
+          asignatura_id: targetAsigId,
+          docente_id: teacher.usuario_id,
+          codigo_grupo: quickGrupoCodigo.trim().toUpperCase(),
+          periodo_academico: quickPeriodo.trim(),
+        },
+      });
+      if (created?.grupo_id) {
+        await apiRequest<unknown>(`/grupos/${created.grupo_id}`, {
+          method: 'PATCH',
+          queueOnNetworkError: true,
+          body: { docente_id: teacher.usuario_id },
+        });
+      }
+      setUserMenuTarget(null);
+      setInfoMessage(
+        `Grupo ${quickGrupoCodigo.trim().toUpperCase()} creado y asignado a ${teacher.nombre_completo}.`
+      );
+      await loadAsignaturas();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible crear el grupo y asignar al docente.'
+      );
     } finally {
       setBusy(false);
     }
@@ -599,25 +734,59 @@ export function AdminDashboard(): ReactElement {
             {usuarios.map((u) => {
               const active = isRecordActive(u.activo);
               return (
-                <View key={u.usuario_id} style={styles.rowCard}>
-                  <View style={styles.rowInfo}>
-                    <Text style={styles.itemTitle}>{u.nombre_completo}</Text>
-                    <Text style={styles.itemMeta}>
-                      {u.rol_codigo} · {u.correo_institucional} · Doc: {u.documento}
-                    </Text>
+                <View key={u.usuario_id} style={styles.catalogCard}>
+                  <View style={styles.catalogHeaderRow}>
+                    <View style={styles.rowInfo}>
+                      <Text style={styles.itemTitle}>{u.nombre_completo}</Text>
+                      <Text style={styles.itemMeta}>
+                        {u.rol_codigo} · {u.correo_institucional} · Doc: {u.documento}
+                      </Text>
+                    </View>
+                    <Pressable
+                      disabled={busy}
+                      onPress={() => void handleToggleUsuario(u)}
+                      style={[
+                        styles.toggleBtn,
+                        { backgroundColor: active ? '#DCFCE7' : '#FEE2E2' },
+                      ]}
+                    >
+                      <Text style={[styles.toggleBtnText, { color: active ? '#15803D' : '#B42318' }]}>
+                        {active ? 'Activo' : 'Inactivo'}
+                      </Text>
+                    </Pressable>
                   </View>
-                  <Pressable
-                    disabled={busy}
-                    onPress={() => void handleToggleUsuario(u)}
-                    style={[
-                      styles.toggleBtn,
-                      { backgroundColor: active ? '#DCFCE7' : '#FEE2E2' },
-                    ]}
-                  >
-                    <Text style={[styles.toggleBtnText, { color: active ? '#15803D' : '#B42318' }]}>
-                      {active ? 'Activo' : 'Inactivo'}
-                    </Text>
-                  </Pressable>
+
+                  {u.rol_codigo === 'ESTUDIANTE' ? (
+                    <View style={styles.groupManageRow}>
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => {
+                          setErrorMessage(null);
+                          setUserMenuTarget(u);
+                        }}
+                        style={styles.groupActionPrimaryBtn}
+                      >
+                        <Text style={styles.groupActionPrimaryText}>⋮ Meter en un Grupo</Text>
+                      </Pressable>
+                    </View>
+                  ) : u.rol_codigo === 'DOCENTE' ? (
+                    <View style={styles.groupManageRow}>
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => {
+                          setErrorMessage(null);
+                          setQuickAsigId(uniqueAsignaturas[0]?.asignatura_id ?? null);
+                          setQuickGrupoCodigo('G01');
+                          setUserMenuTarget(u);
+                        }}
+                        style={styles.groupActionOutlineBtn}
+                      >
+                        <Text style={styles.groupActionOutlineText}>
+                          ⋮ Asignar Materia y Grupo
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               );
             })}
@@ -628,6 +797,179 @@ export function AdminDashboard(): ReactElement {
       {/* TAB 2: Asignaturas y Grupos */}
       {activeTab === 'asignaturas' ? (
         <View style={styles.stackGap}>
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Catálogo de Asignaturas y Grupos</Text>
+            <Text style={styles.itemMeta}>
+              Desde cada grupo puedes asignar/cambiar docente y gestionar sus estudiantes. Si una
+              asignatura aún no tiene grupo, créalo en el formulario de abajo para habilitar estas
+              acciones.
+            </Text>
+            {asignaturas.length === 0 ? (
+              <Text style={styles.itemMeta}>Aún no hay asignaturas registradas.</Text>
+            ) : (
+              asignaturas.map((item, idx) => {
+                const asigLabel = `${item.asignatura_codigo ?? item.codigo ?? ''} · ${item.asignatura_nombre ?? item.nombre ?? ''}`;
+                return (
+                  <View key={`${item.asignatura_id}-${item.grupo_id ?? idx}`} style={styles.catalogCard}>
+                    <View style={styles.catalogHeaderRow}>
+                      <View style={styles.rowInfo}>
+                        <Text style={styles.itemTitle}>{asigLabel}</Text>
+                        <Text style={styles.itemMeta}>
+                          {item.grupo_id
+                            ? `Grupo ${item.codigo_grupo} (${item.periodo_academico ?? ''}) · Docente: ${item.docente_nombre ?? 'Sin asignar'}`
+                            : 'Sin grupos creados aún (crea un grupo abajo para asignar docente y estudiantes)'}
+                        </Text>
+                      </View>
+                      <View style={styles.rowActions}>
+                        <Pressable
+                          onPress={() => void handleToggleAsignatura(item)}
+                          style={[
+                            styles.toggleBtn,
+                            { backgroundColor: item.activa === 0 ? '#FEE2E2' : '#DCFCE7' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.toggleBtnText,
+                              { color: item.activa === 0 ? '#B42318' : '#15803D' },
+                            ]}
+                          >
+                            {item.activa === 0 ? 'Asig. Inactiva' : 'Asig. Activa'}
+                          </Text>
+                        </Pressable>
+                        {item.grupo_id ? (
+                          <Pressable
+                            onPress={() => void handleToggleGrupo(item)}
+                            style={[
+                              styles.toggleBtn,
+                              { backgroundColor: item.grupo_activo === 0 ? '#FEE2E2' : '#EDE9FE' },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.toggleBtnText,
+                                { color: item.grupo_activo === 0 ? '#B42318' : '#6D28D9' },
+                              ]}
+                            >
+                              {item.grupo_activo === 0 ? 'Grupo Off' : 'Grupo On'}
+                            </Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    {item.grupo_id ? (
+                      <View style={styles.groupManageRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setAssignTeacherGroup(item)}
+                          style={styles.groupActionOutlineBtn}
+                        >
+                          <Text style={styles.groupActionOutlineText}>Asignar / Cambiar Docente</Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() =>
+                            setStudentsModalGroup({
+                              grupoId: item.grupo_id as number,
+                              label: `${asigLabel} — Grupo ${item.codigo_grupo ?? ''}`,
+                            })
+                          }
+                          style={styles.groupActionPrimaryBtn}
+                        >
+                          <Text style={styles.groupActionPrimaryText}>Estudiantes del Grupo</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <View style={styles.groupManageRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => {
+                            setGrupoAsignaturaId(item.asignatura_id);
+                            setInfoMessage(
+                              `Asignatura "${asigLabel}" seleccionada. Completa "Crear Grupo Académico" abajo para asignarle docente y agregar estudiantes.`
+                            );
+                          }}
+                          style={styles.groupActionOutlineBtn}
+                        >
+                          <Text style={styles.groupActionOutlineText}>
+                            Seleccionar para Crear Grupo
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>Crear Grupo Académico y Asignar Docente (RF06)</Text>
+            <Text style={styles.label}>Asignatura</Text>
+            <View style={styles.filterRow}>
+              {uniqueAsignaturas.map((a) => (
+                <Pressable
+                  key={a.asignatura_id}
+                  onPress={() => setGrupoAsignaturaId(a.asignatura_id)}
+                  style={[styles.smallPill, grupoAsignaturaId === a.asignatura_id && styles.smallPillActive]}
+                >
+                  <Text
+                    style={[
+                      styles.smallPillText,
+                      grupoAsignaturaId === a.asignatura_id && styles.smallPillTextActive,
+                    ]}
+                  >
+                    {a.asignatura_codigo ?? a.codigo} · {a.asignatura_nombre ?? a.nombre}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.label}>Docente asignado ({docentesList.length} activo(s))</Text>
+            <View style={styles.filterRow}>
+              {docentesList.map((d) => (
+                <Pressable
+                  key={d.usuario_id}
+                  onPress={() => setGrupoDocenteId(d.usuario_id)}
+                  style={[styles.smallPill, grupoDocenteId === d.usuario_id && styles.smallPillActive]}
+                >
+                  <Text
+                    style={[
+                      styles.smallPillText,
+                      grupoDocenteId === d.usuario_id && styles.smallPillTextActive,
+                    ]}
+                  >
+                    {d.nombre_completo}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <TextInput
+              autoCapitalize="characters"
+              onChangeText={setGrupoCodigo}
+              placeholder="Código de grupo (ej. G01)"
+              placeholderTextColor="#94A3B8"
+              style={styles.input}
+              value={grupoCodigo}
+            />
+            <TextInput
+              onChangeText={setGrupoPeriodo}
+              placeholder="Período académico (ej. 2026-2)"
+              placeholderTextColor="#94A3B8"
+              style={styles.input}
+              value={grupoPeriodo}
+            />
+            <Pressable
+              disabled={busy}
+              onPress={() => void handleCreateGrupo()}
+              style={[styles.navyButton, busy && styles.disabled]}
+            >
+              <Text style={styles.primaryButtonText}>Crear Grupo</Text>
+            </Pressable>
+          </View>
+
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Nueva Asignatura (RF05)</Text>
             <TextInput
@@ -660,126 +1002,6 @@ export function AdminDashboard(): ReactElement {
             >
               <Text style={styles.primaryButtonText}>Crear Asignatura</Text>
             </Pressable>
-          </View>
-
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Crear Grupo Académico (RF06)</Text>
-            <Text style={styles.label}>Asignatura</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-              {uniqueAsignaturas.map((a) => (
-                <Pressable
-                  key={a.asignatura_id}
-                  onPress={() => setGrupoAsignaturaId(a.asignatura_id)}
-                  style={[styles.smallPill, grupoAsignaturaId === a.asignatura_id && styles.smallPillActive]}
-                >
-                  <Text
-                    style={[
-                      styles.smallPillText,
-                      grupoAsignaturaId === a.asignatura_id && styles.smallPillTextActive,
-                    ]}
-                  >
-                    {a.codigo} · {a.nombre}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            <Text style={styles.label}>Docente asignado</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-              {docentesList.map((d) => (
-                <Pressable
-                  key={d.usuario_id}
-                  onPress={() => setGrupoDocenteId(d.usuario_id)}
-                  style={[styles.smallPill, grupoDocenteId === d.usuario_id && styles.smallPillActive]}
-                >
-                  <Text
-                    style={[
-                      styles.smallPillText,
-                      grupoDocenteId === d.usuario_id && styles.smallPillTextActive,
-                    ]}
-                  >
-                    {d.nombre_completo}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-
-            <TextInput
-              autoCapitalize="characters"
-              onChangeText={setGrupoCodigo}
-              placeholder="Código de grupo (ej. G01)"
-              placeholderTextColor="#94A3B8"
-              style={styles.input}
-              value={grupoCodigo}
-            />
-            <TextInput
-              onChangeText={setGrupoPeriodo}
-              placeholder="Período académico (ej. 2026-2)"
-              placeholderTextColor="#94A3B8"
-              style={styles.input}
-              value={grupoPeriodo}
-            />
-            <Pressable
-              disabled={busy}
-              onPress={() => void handleCreateGrupo()}
-              style={[styles.navyButton, busy && styles.disabled]}
-            >
-              <Text style={styles.primaryButtonText}>Crear Grupo</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Catálogo de Asignaturas y Grupos</Text>
-            {asignaturas.map((item, idx) => (
-              <View key={`${item.asignatura_id}-${item.grupo_id ?? idx}`} style={styles.rowCard}>
-                <View style={styles.rowInfo}>
-                  <Text style={styles.itemTitle}>
-                    {item.codigo} · {item.nombre}
-                  </Text>
-                  <Text style={styles.itemMeta}>
-                    {item.grupo_id
-                      ? `Grupo ${item.codigo_grupo} (${item.periodo_academico ?? ''}) · Docente: ${item.docente_nombre ?? 'Sin asignar'}`
-                      : 'Sin grupos creados aún'}
-                  </Text>
-                </View>
-                <View style={styles.rowActions}>
-                  <Pressable
-                    onPress={() => void handleToggleAsignatura(item)}
-                    style={[
-                      styles.toggleBtn,
-                      { backgroundColor: item.activa === 0 ? '#FEE2E2' : '#DCFCE7' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.toggleBtnText,
-                        { color: item.activa === 0 ? '#B42318' : '#15803D' },
-                      ]}
-                    >
-                      {item.activa === 0 ? 'Asig. Inactiva' : 'Asig. Activa'}
-                    </Text>
-                  </Pressable>
-                  {item.grupo_id ? (
-                    <Pressable
-                      onPress={() => void handleToggleGrupo(item)}
-                      style={[
-                        styles.toggleBtn,
-                        { backgroundColor: item.grupo_activo === 0 ? '#FEE2E2' : '#EDE9FE' },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.toggleBtnText,
-                          { color: item.grupo_activo === 0 ? '#B42318' : '#6D28D9' },
-                        ]}
-                      >
-                        {item.grupo_activo === 0 ? 'Grupo Off' : 'Grupo On'}
-                      </Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              </View>
-            ))}
           </View>
         </View>
       ) : null}
@@ -926,6 +1148,257 @@ export function AdminDashboard(): ReactElement {
       </Pressable>
 
       <LegalPrivacyModal onClose={() => setLegalVisible(false)} visible={legalVisible} />
+
+      <GroupStudentsModal
+        grupoId={studentsModalGroup?.grupoId ?? null}
+        grupoLabel={studentsModalGroup?.label ?? ''}
+        onClose={() => setStudentsModalGroup(null)}
+        onMembershipChanged={loadAsignaturas}
+        visible={studentsModalGroup !== null}
+      />
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setAssignTeacherGroup(null)}
+        transparent
+        visible={assignTeacherGroup !== null}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.rowInfo}>
+                <Text style={styles.modalTitle}>Asignar / Cambiar Docente</Text>
+                <Text style={styles.modalSubtitle}>
+                  {assignTeacherGroup
+                    ? `${assignTeacherGroup.asignatura_codigo ?? assignTeacherGroup.codigo ?? ''} · Grupo ${assignTeacherGroup.codigo_grupo ?? ''}`
+                    : ''}
+                </Text>
+              </View>
+              <Pressable onPress={() => setAssignTeacherGroup(null)} style={styles.modalCloseBtn}>
+                <Text style={styles.btnText}>Cerrar</Text>
+              </Pressable>
+            </View>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              {docentesList.length === 0 ? (
+                <Text style={styles.itemMeta}>No hay docentes activos disponibles.</Text>
+              ) : (
+                docentesList.map((doc) => {
+                  const isCurrent = assignTeacherGroup?.docente_id === doc.usuario_id;
+                  return (
+                    <Pressable
+                      key={doc.usuario_id}
+                      disabled={busy || !assignTeacherGroup?.grupo_id}
+                      onPress={() => {
+                        if (assignTeacherGroup?.grupo_id) {
+                          void handleAssignTeacherToGroup(
+                            assignTeacherGroup.grupo_id,
+                            doc.usuario_id,
+                            doc.nombre_completo
+                          );
+                        }
+                      }}
+                      style={[
+                        styles.rowCard,
+                        isCurrent && { borderColor: '#F0440B', backgroundColor: '#FFF7ED' },
+                      ]}
+                    >
+                      <View style={styles.rowInfo}>
+                        <Text style={styles.itemTitle}>{doc.nombre_completo}</Text>
+                        <Text style={styles.itemMeta}>
+                          {doc.correo_institucional} · Doc: {doc.documento}
+                        </Text>
+                      </View>
+                      <Text style={styles.editLink}>{isCurrent ? 'Actual' : 'Asignar'}</Text>
+                    </Pressable>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Menú por usuario: Estudiante -> Meter en Grupo | Docente -> Asignar Materia y Grupo */}
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setUserMenuTarget(null)}
+        transparent
+        visible={userMenuTarget !== null}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.rowInfo}>
+                <Text style={styles.modalTitle}>
+                  {userMenuTarget?.rol_codigo === 'DOCENTE'
+                    ? 'Asignar Materia y Grupo al Docente'
+                    : 'Meter Estudiante en un Grupo'}
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  {userMenuTarget
+                    ? `${userMenuTarget.nombre_completo} · Doc: ${userMenuTarget.documento}`
+                    : ''}
+                </Text>
+              </View>
+              <Pressable onPress={() => setUserMenuTarget(null)} style={styles.modalCloseBtn}>
+                <Text style={styles.btnText}>Cerrar</Text>
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              {userMenuTarget?.rol_codigo === 'ESTUDIANTE' ? (
+                gruposDisponibles.length === 0 ? (
+                  <View style={styles.stackGap}>
+                    <Text style={styles.itemMeta}>
+                      Aún no hay grupos creados. Crea primero un grupo en la pestaña "Asignaturas y
+                      Grupos" para poder matricular estudiantes.
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        setUserMenuTarget(null);
+                        setActiveTab('asignaturas');
+                      }}
+                      style={styles.primaryButton}
+                    >
+                      <Text style={styles.primaryButtonText}>Ir a Asignaturas y Grupos</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  gruposDisponibles.map((g) => (
+                    <View key={g.grupo_id as number} style={styles.rowCard}>
+                      <View style={styles.rowInfo}>
+                        <Text style={styles.itemTitle}>
+                          {g.asignatura_codigo ?? g.codigo} · {g.asignatura_nombre ?? g.nombre}
+                        </Text>
+                        <Text style={styles.itemMeta}>
+                          Grupo {g.codigo_grupo} ({g.periodo_academico ?? ''}) · Docente:{' '}
+                          {g.docente_nombre ?? 'Sin asignar'}
+                        </Text>
+                      </View>
+                      <Pressable
+                        disabled={busy}
+                        onPress={() => void handleEnrollStudentFromDirectory(userMenuTarget, g)}
+                        style={[styles.groupActionPrimaryBtn, busy && styles.disabled]}
+                      >
+                        <Text style={styles.groupActionPrimaryText}>Incluir</Text>
+                      </Pressable>
+                    </View>
+                  ))
+                )
+              ) : userMenuTarget?.rol_codigo === 'DOCENTE' ? (
+                <View style={styles.stackGap}>
+                  <Text style={styles.label}>Opción 1: Crear nuevo grupo de una materia para este docente</Text>
+                  {uniqueAsignaturas.length === 0 ? (
+                    <Text style={styles.itemMeta}>
+                      Aún no hay materias creadas. Crea primero una asignatura en la pestaña
+                      "Asignaturas y Grupos".
+                    </Text>
+                  ) : (
+                    <View style={styles.stackGap}>
+                      <View style={styles.filterRow}>
+                        {uniqueAsignaturas.map((a) => {
+                          const selected =
+                            (quickAsigId ?? uniqueAsignaturas[0]?.asignatura_id) === a.asignatura_id;
+                          return (
+                            <Pressable
+                              key={a.asignatura_id}
+                              onPress={() => setQuickAsigId(a.asignatura_id)}
+                              style={[styles.smallPill, selected && styles.smallPillActive]}
+                            >
+                              <Text
+                                style={[
+                                  styles.smallPillText,
+                                  selected && styles.smallPillTextActive,
+                                ]}
+                              >
+                                {a.asignatura_codigo ?? a.codigo} · {a.asignatura_nombre ?? a.nombre}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                      <TextInput
+                        autoCapitalize="characters"
+                        onChangeText={setQuickGrupoCodigo}
+                        placeholder="Código de grupo (ej. G01)"
+                        placeholderTextColor="#94A3B8"
+                        style={styles.input}
+                        value={quickGrupoCodigo}
+                      />
+                      <TextInput
+                        onChangeText={setQuickPeriodo}
+                        placeholder="Período académico (ej. 2026-2)"
+                        placeholderTextColor="#94A3B8"
+                        style={styles.input}
+                        value={quickPeriodo}
+                      />
+                      <Pressable
+                        disabled={busy}
+                        onPress={() => void handleQuickCreateGroupForTeacher(userMenuTarget)}
+                        style={[styles.primaryButton, busy && styles.disabled]}
+                      >
+                        <Text style={styles.primaryButtonText}>
+                          Crear Grupo y Asignar a este Docente
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {gruposDisponibles.length > 0 ? (
+                    <View style={styles.stackGap}>
+                      <Text style={styles.label}>
+                        Opción 2: Asignar a un grupo ya existente ({gruposDisponibles.length})
+                      </Text>
+                      {gruposDisponibles.map((g) => {
+                        const isCurrent = g.docente_id === userMenuTarget.usuario_id;
+                        return (
+                          <View key={g.grupo_id as number} style={styles.rowCard}>
+                            <View style={styles.rowInfo}>
+                              <Text style={styles.itemTitle}>
+                                {g.asignatura_codigo ?? g.codigo} · {g.asignatura_nombre ?? g.nombre}
+                              </Text>
+                              <Text style={styles.itemMeta}>
+                                Grupo {g.codigo_grupo} ({g.periodo_academico ?? ''}) · Actual:{' '}
+                                {g.docente_nombre ?? 'Sin asignar'}
+                              </Text>
+                            </View>
+                            <Pressable
+                              disabled={busy || !g.grupo_id}
+                              onPress={() => {
+                                if (g.grupo_id) {
+                                  void handleAssignTeacherToGroup(
+                                    g.grupo_id,
+                                    userMenuTarget.usuario_id,
+                                    userMenuTarget.nombre_completo
+                                  );
+                                }
+                              }}
+                              style={[
+                                isCurrent ? styles.groupActionOutlineBtn : styles.groupActionPrimaryBtn,
+                                busy && styles.disabled,
+                              ]}
+                            >
+                              <Text
+                                style={
+                                  isCurrent
+                                    ? styles.groupActionOutlineText
+                                    : styles.groupActionPrimaryText
+                                }
+                              >
+                                {isCurrent ? 'Asignado' : 'Asignar'}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1204,5 +1677,91 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  catalogCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  catalogHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  groupManageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  groupActionOutlineBtn: {
+    borderWidth: 1,
+    borderColor: '#07152F',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: '#FFFFFF',
+  },
+  groupActionOutlineText: {
+    color: '#07152F',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  groupActionPrimaryBtn: {
+    backgroundColor: '#F0440B',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  groupActionPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 21, 47, 0.65)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    maxHeight: '80%',
+    maxWidth: 560,
+    width: '100%',
+    alignSelf: 'center',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    backgroundColor: '#07152F',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  modalSubtitle: {
+    color: '#CBD5E1',
+    fontSize: 12,
+  },
+  modalCloseBtn: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  modalBody: {
+    padding: 16,
+    gap: 10,
   },
 });
